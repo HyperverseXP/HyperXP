@@ -155,6 +155,19 @@ contract HyperXP is Ownable, ReentrancyGuard {
         xp[collection][tokenId] += amount;
     }
 
+     /// @notice Calculates the level of the specified tokenId from a given collection, defaults to 1
+    function getLevel(address collection, uint256 tokenId) 
+    public
+    view
+    returns(uint256) {
+        uint256 _xp = xp[collection][tokenId];
+        if (_xp < 65) return 1;
+        else if (_xp < 70) return 2;
+        else {
+            return 1 + (sqrt(625+75*_xp)-25)/50; // roughly 15% increase xp per level
+        }
+    }
+
     modifier isHyper(address collection) {
         require(hyperAddresses[collection], "not yet in hyper xp");
         _;
@@ -183,5 +196,59 @@ contract HyperXP is Ownable, ReentrancyGuard {
     external
     onlyOwner {
         hyperAddresses[collection] = false;
+    }
+}
+
+/// @notice Calculates the square root of x, rounding down.
+/// @dev Uses the Babylonian method https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method.
+/// @param x The uint256 number for which to calculate the square root.
+/// @return result The result as an uint256.
+function sqrt(uint256 x) pure returns (uint256 result) {
+    if (x == 0) {
+        return 0;
+    }
+
+    // Calculate the square root of the perfect square of a power of two that is the closest to x.
+    uint256 xAux = uint256(x);
+    result = 1;
+    if (xAux >= 0x100000000000000000000000000000000) {
+        xAux >>= 128;
+        result <<= 64;
+    }
+    if (xAux >= 0x10000000000000000) {
+        xAux >>= 64;
+        result <<= 32;
+    }
+    if (xAux >= 0x100000000) {
+        xAux >>= 32;
+        result <<= 16;
+    }
+    if (xAux >= 0x10000) {
+        xAux >>= 16;
+        result <<= 8;
+    }
+    if (xAux >= 0x100) {
+        xAux >>= 8;
+        result <<= 4;
+    }
+    if (xAux >= 0x10) {
+        xAux >>= 4;
+        result <<= 2;
+    }
+    if (xAux >= 0x8) {
+        result <<= 1;
+    }
+
+    // The operations can never overflow because the result is max 2^127 when it enters this block.
+    unchecked {
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1; // Seven iterations should be enough
+        uint256 roundedDownResult = x / result;
+        return result >= roundedDownResult ? roundedDownResult : result;
     }
 }
