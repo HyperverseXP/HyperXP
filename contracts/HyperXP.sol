@@ -115,6 +115,10 @@ contract HyperXP is Ownable, ReentrancyGuard {
     // returns xp of given token from collection
     mapping(address => mapping(uint256 => uint256)) public xp;
 
+    // maximum xp a token can have
+    // can be increased by contract
+    uint256 public maxXP; 
+
     // address: collection address
     // uint256: id of token in collection
     // returns the block of the last Action Point used by given token from collection
@@ -127,7 +131,9 @@ contract HyperXP is Ownable, ReentrancyGuard {
     // returns the XP allocated to a given contract
     mapping(address => uint256) public xpAlloc;
 
-    constructor() {}
+    constructor() {
+        maxXP = 2000;
+    }
 
     // 1 ap every 5 minutes. does not stack.
     function availableAP(address collection, uint256 tokenId)
@@ -152,7 +158,12 @@ contract HyperXP is Ownable, ReentrancyGuard {
     external {
         require(amount <= xpAlloc[msg.sender], "not enough XP");
         xpAlloc[msg.sender] -= amount;
-        xp[collection][tokenId] += amount;
+        // xp can't go over maxXP
+        if (xp[collection][tokenId] + amount > maxXP) {
+            xp[collection][tokenId] = maxXP;
+        } else {
+            xp[collection][tokenId] += amount;
+        }
     }
 
      /// @notice Calculates the level of the specified tokenId from a given collection, defaults to 1
@@ -196,6 +207,12 @@ contract HyperXP is Ownable, ReentrancyGuard {
     external
     onlyOwner {
         hyperAddresses[collection] = false;
+    }
+
+    function _setMaxXP(uint256 amount)
+    external
+    onlyOwner {
+        maxXP = amount;
     }
 }
 
