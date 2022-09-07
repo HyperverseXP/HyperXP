@@ -132,7 +132,7 @@ contract HyperXP is Ownable, ReentrancyGuard {
     mapping(address => uint256) public xpAlloc;
 
     constructor() {
-        maxXP = 2000;
+        maxXP = 3000; // level 10
     }
 
     // 1 ap every 5 minutes. does not stack.
