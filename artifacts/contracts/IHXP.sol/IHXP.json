@@ -37,6 +37,30 @@
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
+        }
+      ],
+      "name": "getLevel",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "collection",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
         },
         {
           "internalType": "uint256",

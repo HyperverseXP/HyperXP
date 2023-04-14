@@ -131,6 +131,11 @@ contract HyperXP is Ownable, ReentrancyGuard {
     // returns the XP allocated to a given contract
     mapping(address => uint256) public xpAlloc;
 
+    event AwardXP(address indexed collection, uint256 indexed tokenId, uint256 amount);
+    event UseAP(address indexed collection, uint256 indexed tokenId, uint256 amount, address indexed to);
+    event AddCollection(address indexed collection);
+    event RemoveCollection(address indexed collection);
+
     constructor() {
         maxXP = 3000; // level 10
     }
@@ -150,7 +155,8 @@ contract HyperXP is Ownable, ReentrancyGuard {
     external {
         require(amount <= availableAP(collection, tokenId), "not enough AP");
         apBlock[collection][tokenId].lastUse = uint128(block.timestamp);
-        xpAlloc[to] += amount * 200; // 200 XP per AP
+        xpAlloc[to] += amount * 100; 
+        emit UseAP(collection, tokenId, amount, to);
     }
 
     function awardXP(address collection, uint256 tokenId, uint256 amount) 
@@ -158,11 +164,14 @@ contract HyperXP is Ownable, ReentrancyGuard {
     external {
         require(amount <= xpAlloc[msg.sender], "not enough XP");
         xpAlloc[msg.sender] -= amount;
+
         // xp can't go over maxXP
         if (xp[collection][tokenId] + amount > maxXP) {
+            emit AwardXP(collection, tokenId, maxXP - xp[collection][tokenId]);
             xp[collection][tokenId] = maxXP;
         } else {
             xp[collection][tokenId] += amount;
+            emit AwardXP(collection, tokenId, amount);
         }
     }
 
@@ -184,6 +193,7 @@ contract HyperXP is Ownable, ReentrancyGuard {
         _;
     }
 
+    // verify the owner of the token is the one calling the function
     modifier isAssetOwner(address collection, uint256 tokenId) {
         require(IERC721(collection).ownerOf(tokenId) == tx.origin, "you can't perform this action");
         _;
@@ -193,6 +203,7 @@ contract HyperXP is Ownable, ReentrancyGuard {
     external
     onlyOwner {
         hyperAddresses[collection] = true;
+        emit AddCollection(collection);
     }
 
     function _addCollections(address[] calldata collections) 
@@ -200,6 +211,7 @@ contract HyperXP is Ownable, ReentrancyGuard {
     onlyOwner {
         for (uint i=0; i < collections.length; i++) {
             hyperAddresses[collections[i]] = true;
+            emit AddCollection(collections[i]);
         }
     }
 
@@ -207,6 +219,7 @@ contract HyperXP is Ownable, ReentrancyGuard {
     external
     onlyOwner {
         hyperAddresses[collection] = false;
+        emit RemoveCollection(collection);
     }
 
     function _setMaxXP(uint256 amount)
